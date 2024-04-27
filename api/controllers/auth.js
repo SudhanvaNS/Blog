@@ -1,0 +1,47 @@
+import bcrypt from 'bcryptjs';
+import { db } from "../db.js";
+import jwt from "jsonwebtoken";
+
+export const register = (req,res)=>{
+    // CHECK EXISTING USER
+    const q="SELECT * FROM  user  WHERE email = ? OR username = ?";
+    db.query(q,[req.body.email,req.body.username],(err,data)=>{
+        if(err) return res.json(err);
+        if(data.length) return res.status(409).json("user alredy exists!");        
+        const salt=bcrypt.genSaltSync(10);
+        const hash=bcrypt.hashSync(req.body.password,salt);
+        const q="INSERT  INTO USER(`username`,`email`,`password`) VALUES (?)"
+        const values =[
+            req.body.username,
+            req.body.email,
+            hash,
+        ]
+        db.query(q,[values] ,(err,data)=>{
+            if(err) return res.json(err);
+            return res.status(200).json("user has been created")
+        })
+    })
+    }
+export const login =(req,res)=>{
+    const q="SELECT * FROM USER WHERE USERNAME= ?";
+    db.query(q,[req.body.username],(err,data) => {
+        if(err) return res.status(409).json(err);
+        if(data.length==0) return res.status(404).json("User Not Found!");
+        // console.log(data);
+        const {password, ...other}=data[0];
+        const ispasswordCorrect=bcrypt.compareSync(req.body.password,data[0].password);
+        if(!ispasswordCorrect) return res.status(400).json("Wrong username or Password");
+        const token=jwt.sign({id:data[0].username},"jwtkey");
+        res.cookie("access_token",token,{
+            httpOnly:true
+        }).status(200).json(other);
+    })
+}
+
+export const logout = (req,res) =>{
+        res.clearCookie("access_token",{
+            sameSite:"none",
+            secure:true
+        }).status(200).json("user has been logged out");
+
+}
