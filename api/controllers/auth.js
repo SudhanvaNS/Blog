@@ -7,7 +7,8 @@ export const register = (req,res)=>{
     const q="SELECT * FROM  user  WHERE email = ? OR username = ?";
     db.query(q,[req.body.email,req.body.username],(err,data)=>{
         if(err) return res.json(err);
-        if(data.length) return res.status(409).json("user alredy exists!");        
+        if(data.length) return res.status(409).json("user alredy exists!");       
+        // hash the password and create the users 
         const salt=bcrypt.genSaltSync(10);
         const hash=bcrypt.hashSync(req.body.password,salt);
         const q="INSERT  INTO USER(`username`,`email`,`password`) VALUES (?)"
@@ -31,7 +32,7 @@ export const login =(req,res)=>{
         const {password, ...other}=data[0];
         const ispasswordCorrect=bcrypt.compareSync(req.body.password,data[0].password);
         if(!ispasswordCorrect) return res.status(400).json("Wrong username or Password");
-        const token=jwt.sign({id:data[0].username},"jwtkey");
+        const token=jwt.sign({id:data[0].id},"jwtkey");
         res.cookie("access_token",token,{
             httpOnly:true
         }).status(200).json(other);

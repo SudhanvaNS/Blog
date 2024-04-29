@@ -9,9 +9,7 @@ const app=express();
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
-app.listen(8000,()=>{
-    console.log("Connected");
-})
+
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -27,7 +25,7 @@ const storage = multer.diskStorage({
 const upload=multer({ storage});
 
 
-app.post(`/api/upload`,upload.single("file"),  function(req,res){
+app.post('/api/upload',upload.single("file"),  function(req,res){
     const file = req.file;
     return res.status(200).json(file.filename);
 
@@ -35,3 +33,7 @@ app.post(`/api/upload`,upload.single("file"),  function(req,res){
 app.use('/api/auth',authRoutes);
 app.use('/api/posts',postRoutes);
 app.use('/api/user',userRoutes);
+
+app.listen(8000,()=>{
+  console.log("Connected");
+})  
